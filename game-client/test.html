@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebSocket Game Test</title>
+    <style>
+      body {
+        margin: 20px;
+        font-family: Arial, sans-serif;
+      }
+      #messages {
+        border: 1px solid #ccc;
+        padding: 10px;
+        height: 300px;
+        overflow-y: auto;
+        margin-bottom: 10px;
+      }
+      input,
+      button {
+        padding: 5px;
+        margin-right: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>WebSocket Game Test</h2>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message..." />
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+      class GameClient {
+        constructor(url) {
+          this.url = url;
+          this.socket = null;
+          this.connected = false;
+        }
+
+        connect() {
+          this.socket = new WebSocket(this.url);
+
+          this.socket.onopen = () => {
+            console.log("Connected to game server");
+            this.connected = true;
+            appendMessage("System", "Connected to server");
+          };
+
+          this.socket.onmessage = (event) => {
+            console.log("Received:", event.data);
+            const message = JSON.parse(event.data);
+            appendMessage(
+              message.sender || "Server",
+              message.text || "Unknown message"
+            );
+          };
+
+          this.socket.onclose = () => {
+            console.log("Disconnected from server");
+            this.connected = false;
+            appendMessage("System", "Disconnected from server");
+          };
+
+          this.socket.onerror = (error) => {
+            console.error("WebSocket error:", error);
+            appendMessage("Error", "An error occurred");
+          };
+        }
+
+        send(data) {
+          if (this.connected && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify(data));
+          } else {
+            appendMessage("System", "Failed to send: Not connected");
+          }
+        }
+      }
+
+      // Instantiate and connect GameClient
+      const gameClient = new GameClient("ws://localhost:8080");
+      gameClient.connect();
+
+      // UI functions
+      const messages = document.getElementById("messages");
+      const messageInput = document.getElementById("messageInput");
+
+      function sendMessage() {
+        const text = messageInput.value;
+        if (text) {
+          gameClient.send({ sender: "You", text });
+          appendMessage("You", text);
+          messageInput.value = "";
+        }
+      }
+
+      function appendMessage(sender, message) {
+        const time = new Date().toLocaleTimeString();
+        messages.innerHTML += `<p><strong>${time} - ${sender}:</strong> ${message}</p>`;
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      messageInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+      });
+    </script>
+  </body>
+</html>

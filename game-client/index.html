@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2D Shooter Game</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+      }
+      canvas {
+        display: block;
+      }
+      button {
+        padding: 8px 16px;
+        margin: 5px;
+        cursor: pointer;
+        background: #4caf50;
+        border: none;
+        color: white;
+        border-radius: 4px;
+      }
+      button:hover {
+        background: #45a049;
+      }
+      input {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas"></canvas>
+    <script src="game.js"></script>
+    <script src="gameSocket.js"></script>
+    <script>
+      const game = new Game("gameCanvas");
+      const gameClient = new GameClient(game);
+      const originalUpdate = game.update;
+      game.update = function (deltaTime) {
+        originalUpdate.call(this, deltaTime);
+        gameClient.sendGameState();
+      };
+    </script>
+  </body>
+</html>
