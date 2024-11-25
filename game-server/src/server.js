@@ -4,13 +4,14 @@ const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 
 const app = express();
-const port = process.env.PORT || 8080;
-const wss = new WebSocket.Server({ port: 8080 });
+const port = process.env.PORT || 10000;
 
 app.use(express.static(path.join(__dirname, "../../game-client")));
 const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+const wss = new WebSocket.Server({ server });
+
 // Store for active games/rooms
 const rooms = new Map();
 
