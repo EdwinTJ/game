@@ -88,6 +88,18 @@ class GameClient {
         this.game.localPlayerIndex = 0;
         break;
 
+      case "projectile_created":
+        if (data.playerId !== this.playerId) {
+          const projectile = new Projectile(
+            data.projectile.x,
+            data.projectile.y,
+            data.projectile.direction,
+            data.projectile.color
+          );
+          this.game.projectiles.push(projectile);
+        }
+        break;
+
       case "room_joined":
         this.roomId = data.roomId;
         this.playerId = data.playerId;
@@ -185,6 +197,21 @@ class GameClient {
           },
         });
       }
+    }
+  }
+
+  sendProjectile(projectile) {
+    if (this.connected && this.roomId) {
+      this.send({
+        type: "projectile_created",
+        roomId: this.roomId,
+        projectile: {
+          x: projectile.x,
+          y: projectile.y,
+          direction: projectile.direction,
+          color: projectile.color,
+        },
+      });
     }
   }
 }

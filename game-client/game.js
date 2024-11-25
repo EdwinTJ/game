@@ -1,5 +1,5 @@
 class Game {
-  constructor(canvasId) {
+  constructor(canvasId, gameClient) {
     this.canvas = document.getElementById(canvasId);
     this.ctx = this.canvas.getContext("2d");
     this.players = [];
@@ -7,6 +7,7 @@ class Game {
     this.lastTime = 0;
     this.keys = {};
     this.localPlayerIndex = 0;
+    this.gameClient = gameClient;
     this.init();
   }
 
@@ -23,7 +24,7 @@ class Game {
       if (e.key === " " && !e.repeat) {
         const localPlayer = this.players[this.localPlayerIndex];
         if (localPlayer) {
-          localPlayer.shoot(this.projectiles);
+          localPlayer.shoot(this.projectiles, this.gameClient);
         }
       }
     });
@@ -146,7 +147,7 @@ class Player {
     }
   }
 
-  shoot(projectiles) {
+  shoot(projectiles, gameClient = null) {
     if (this.shootCooldown <= 0) {
       const projectile = new Projectile(
         this.x,
@@ -156,6 +157,9 @@ class Player {
       );
       projectiles.push(projectile);
       this.shootCooldown = 0.25;
+      if (gameClient) {
+        gameClient.sendProjectile(projectile);
+      }
     }
   }
 
