@@ -1,8 +1,16 @@
 const WebSocket = require("ws");
+const express = require("express");
+const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 
+const app = express();
+const port = process.env.PORT || 8080;
 const wss = new WebSocket.Server({ port: 8080 });
 
+app.use(express.static(path.join(__dirname, "../../game-client")));
+const server = app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
 // Store for active games/rooms
 const rooms = new Map();
 
@@ -138,6 +146,27 @@ wss.on("connection", (ws) => {
             type: "projectile_created",
             playerId: playerId,
             projectile: data.projectile,
+          });
+        }
+        break;
+
+      case "player_death":
+        const deathRoom = rooms.get(data.roomId);
+        if (deathRoom) {
+          deathRoom.broadcastTo({
+            type: "player_death",
+            playerId: playerId,
+          });
+        }
+        break;
+
+      case "health_update":
+        const healthRoom = rooms.get(data.roomId);
+        if (healthRoom) {
+          healthRoom.broadcastTo({
+            type: "health_update",
+            playerId: playerId,
+            health: data.health,
           });
         }
         break;

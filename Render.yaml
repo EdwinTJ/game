@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: multiplayer-game
+    env: node
+    buildCommand: cd game-server && npm install
+    startCommand: cd game-server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production

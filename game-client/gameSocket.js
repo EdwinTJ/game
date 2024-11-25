@@ -6,9 +6,21 @@ class GameClient {
     this.roomId = null;
     this.playerId = null;
     this.position = null;
+    this.serverUrl = this.getServerUrl();
     this.init();
   }
-
+  getServerUrl() {
+    // Check if we're in production or development
+    if (
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+    ) {
+      return "ws://localhost:8080";
+    } else {
+      // Replace this with your production server URL
+      return `wss://${window.location.hostname}`;
+    }
+  }
   init() {
     this.createUI();
     this.connect();
@@ -54,7 +66,7 @@ class GameClient {
   }
 
   connect() {
-    this.socket = new WebSocket("ws://localhost:8080");
+    this.socket = new WebSocket(this.serverUrl);
 
     this.socket.onopen = () => {
       console.log("Connected to game server");
@@ -86,6 +98,29 @@ class GameClient {
           new Player(100, window.innerHeight / 2, "red", "left"),
         ];
         this.game.localPlayerIndex = 0;
+        break;
+
+      case "health_update":
+        if (data.playerId !== this.playerId) {
+          const opponentIndex = this.position === "left" ? 1 : 0;
+          const opponent = this.game.players[opponentIndex];
+          if (opponent) {
+            opponent.health = data.health;
+            if (data.health <= 0) {
+              opponent.die();
+            }
+          }
+        }
+        break;
+
+      case "player_death":
+        if (data.playerId !== this.playerId) {
+          const opponentIndex = this.position === "left" ? 1 : 0;
+          const opponent = this.game.players[opponentIndex];
+          if (opponent) {
+            opponent.die();
+          }
+        }
         break;
 
       case "projectile_created":
@@ -211,6 +246,25 @@ class GameClient {
           direction: projectile.direction,
           color: projectile.color,
         },
+      });
+    }
+  }
+
+  sendHealthUpdate(health) {
+    if (this.connected && this.roomId) {
+      this.send({
+        type: "health_update",
+        roomId: this.roomId,
+        health: health,
+      });
+    }
+  }
+
+  sendPlayerDeath() {
+    if (this.connected && this.roomId) {
+      this.send({
+        type: "player_death",
+        roomId: this.roomId,
       });
     }
   }

@@ -23,7 +23,7 @@ class Game {
     window.addEventListener("keydown", (e) => {
       if (e.key === " " && !e.repeat) {
         const localPlayer = this.players[this.localPlayerIndex];
-        if (localPlayer) {
+        if (localPlayer && !localPlayer.isDead) {
           localPlayer.shoot(this.projectiles, this.gameClient);
         }
       }
@@ -37,6 +37,55 @@ class Game {
     this.canvas.height = window.innerHeight;
   }
 
+  checkCollisions() {
+    // Check each projectile against each player
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const projectile = this.projectiles[i];
+
+      this.players.forEach((player, playerIndex) => {
+        if (!player.isDead && this.detectCollision(projectile, player)) {
+          const isProjectileFromLeft = projectile.direction === 0;
+          const isPlayerOnRight = player.side === "right";
+
+          if (
+            projectile.color !== player.color &&
+            ((isProjectileFromLeft && isPlayerOnRight) ||
+              (!isProjectileFromLeft && !isPlayerOnRight))
+          ) {
+            // Remove the projectile
+            this.projectiles.splice(i, 1);
+
+            // Deal damage to the player
+            player.takeDamage(20);
+
+            // If this is the local player who got hit, send health update
+            if (playerIndex === this.localPlayerIndex) {
+              this.gameClient.sendHealthUpdate(player.health);
+            }
+
+            // Check if player died
+            if (player.health <= 0) {
+              player.die();
+              if (playerIndex === this.localPlayerIndex) {
+                this.gameClient.sendPlayerDeath();
+              }
+            }
+          }
+        }
+      });
+    }
+  }
+
+  detectCollision(projectile, player) {
+    // Calculate distance between projectile and player
+    const dx = projectile.x - player.x;
+    const dy = projectile.y - player.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Check if distance is less than sum of radii
+    return distance < player.size / 2 + projectile.size;
+  }
+
   update(deltaTime) {
     // Update local player only
     const localPlayer = this.players[this.localPlayerIndex];
@@ -44,6 +93,7 @@ class Game {
       localPlayer.handleInput(this.keys, deltaTime);
       localPlayer.update(deltaTime, this.canvas.width);
     }
+
     // Update other players without input
     this.players.forEach((player, index) => {
       if (index !== this.localPlayerIndex) {
@@ -61,6 +111,9 @@ class Game {
         this.projectiles.splice(i, 1);
       }
     }
+
+    // Check for collisions
+    this.checkCollisions();
   }
 
   draw() {
@@ -103,9 +156,14 @@ class Player {
     this.side = side;
     this.direction = this.side === "left" ? 0 : Math.PI;
     this.shootCooldown = 0;
+    this.health = 100;
+    this.isDead = false;
+    this.respawnTimer = 0;
   }
 
   handleInput(keys, deltaTime) {
+    if (this.isDead) return;
+
     // Movement
     if (keys["w"] || keys["ArrowUp"]) this.y -= this.speed * deltaTime;
     if (keys["s"] || keys["ArrowDown"]) this.y += this.speed * deltaTime;
@@ -117,6 +175,14 @@ class Player {
   }
 
   update(deltaTime, canvasWidth) {
+    if (this.isDead) {
+      this.respawnTimer -= deltaTime;
+      if (this.respawnTimer <= 0) {
+        this.respawn();
+      }
+      return;
+    }
+
     const centerLine = canvasWidth / 2;
     const playerRadius = this.size / 2;
 
@@ -148,10 +214,12 @@ class Player {
   }
 
   shoot(projectiles, gameClient = null) {
+    if (this.isDead) return;
+
     if (this.shootCooldown <= 0) {
       const projectile = new Projectile(
-        this.x,
-        this.y,
+        this.x + Math.cos(this.direction) * (this.size / 2), // Spawn projectile at edge of player
+        this.y + Math.sin(this.direction) * (this.size / 2),
         this.direction,
         this.color
       );
@@ -163,7 +231,41 @@ class Player {
     }
   }
 
+  takeDamage(amount) {
+    if (this.isDead) return;
+
+    this.health = Math.max(0, this.health - amount);
+    if (this.health <= 0) {
+      this.die();
+    }
+  }
+
+  die() {
+    this.isDead = true;
+    this.respawnTimer = 3; // 3 seconds respawn time
+  }
+
+  respawn() {
+    this.isDead = false;
+    this.health = 100;
+    // Reset position based on side
+    this.x = this.side === "left" ? 100 : window.innerWidth - 100;
+    this.y = window.innerHeight / 2;
+  }
+
   draw(ctx) {
+    if (this.isDead) {
+      // Draw respawn timer
+      ctx.fillStyle = "#ff0000";
+      ctx.font = "20px Arial";
+      ctx.fillText(
+        `Respawning in ${Math.ceil(this.respawnTimer)}...`,
+        this.x - 50,
+        this.y - 50
+      );
+      return;
+    }
+
     // Draw player body
     ctx.fillStyle = this.color;
     ctx.beginPath();
@@ -180,9 +282,26 @@ class Player {
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 3;
     ctx.stroke();
+
+    // Draw health bar
+    this.drawHealthBar(ctx);
+  }
+
+  drawHealthBar(ctx) {
+    const barWidth = 50;
+    const barHeight = 5;
+    const xPos = this.x - barWidth / 2;
+    const yPos = this.y - this.size - 10;
+
+    // Draw background (empty health bar)
+    ctx.fillStyle = "#ff0000";
+    ctx.fillRect(xPos, yPos, barWidth, barHeight);
+
+    // Draw current health
+    ctx.fillStyle = "#00ff00";
+    ctx.fillRect(xPos, yPos, barWidth * (this.health / 100), barHeight);
   }
 }
-
 class Projectile {
   constructor(x, y, direction, color) {
     this.x = x;
