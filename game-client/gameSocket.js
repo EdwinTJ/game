@@ -1,3 +1,6 @@
+import { Player, Projectile } from "./game.js";
+export { GameClient };
+
 class GameClient {
   constructor(game) {
     this.socket = null;
@@ -10,15 +13,16 @@ class GameClient {
     this.init();
   }
   getServerUrl() {
-    // Check if we're in production or development
-    if (
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1"
-    ) {
-      return "ws://localhost:8080";
+    const isDevelopment = import.meta.env.DEV;
+    const hostname = window.location.hostname;
+
+    if (isDevelopment) {
+      // In development, connect to the WebSocket through Vite's proxy
+      return `ws://${hostname}:8080`; // Connect directly to WebSocket server
     } else {
-      // Replace this with your production server URL
-      return `wss://${window.location.hostname}`;
+      // In production, connect directly to the server
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      return `${protocol}//${hostname}:8080`;
     }
   }
   init() {

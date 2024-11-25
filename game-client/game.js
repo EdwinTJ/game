@@ -1,3 +1,7 @@
+export { Game };
+export { Player };
+export { Projectile };
+
 class Game {
   constructor(canvasId, gameClient) {
     this.canvas = document.getElementById(canvasId);
@@ -11,7 +15,16 @@ class Game {
     this.init();
   }
 
+  setGameClient(client) {
+    this.gameClient = client;
+  }
+
   init() {
+    if (!this.canvas) {
+      console.error("Canvas element not found!");
+      return;
+    }
+
     this.resizeCanvas();
     window.addEventListener("resize", () => this.resizeCanvas());
 

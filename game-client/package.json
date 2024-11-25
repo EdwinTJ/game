@@ -2,7 +2,13 @@
   "name": "game-client",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
-    "build": "echo 'No build step needed'"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.0.10"
   }
 }

@@ -1,15 +1,36 @@
-const WebSocket = require("ws");
 const express = require("express");
+const WebSocket = require("ws");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
+const dotenv = require("dotenv");
+const cors = require("cors");
 
+// Load environment variables
+dotenv.config({
+  path: path.join(
+    __dirname,
+    `../.env.${process.env.NODE_ENV || "development"}`
+  ),
+});
 const app = express();
 const port = process.env.PORT || 10000;
 
-app.use(express.static(path.join(__dirname, "../../game-client")));
+// Enable CORS in development
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN,
+  })
+);
+
+// Serve static files only in production
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../../game-client/dist")));
+}
+
 const server = app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${port}`);
 });
+
 const wss = new WebSocket.Server({ server });
 
 // Store for active games/rooms

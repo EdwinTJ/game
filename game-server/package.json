@@ -4,12 +4,18 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js --watch src",
+    "debug": "nodemon --inspect src/server.js --watch src"
   },
   "dependencies": {
     "express": "^4.18.2",
     "ws": "^8.16.0",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "dotenv": "^16.3.1"
   },
   "engines": {
     "node": ">=18.0.0"
