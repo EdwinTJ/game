@@ -129,6 +129,18 @@ wss.on("connection", (ws) => {
           });
         }
         break;
+
+      case "projectile_created":
+        const projectileRoom = rooms.get(data.roomId);
+        if (projectileRoom) {
+          // Broadcast projectile to all players in the room
+          projectileRoom.broadcastTo({
+            type: "projectile_created",
+            playerId: playerId,
+            projectile: data.projectile,
+          });
+        }
+        break;
     }
   });
 

@@ -80,12 +80,24 @@ class GameClient {
         this.playerId = data.playerId;
         this.position = data.position;
         this.roomInfo.textContent = `Room created! ID: ${this.roomId}`;
-        // Create only left player, waiting for opponent
-        this.game.players = [];
-        this.game.players.push(
-          new Player(100, window.innerHeight / 2, "red", "left")
-        );
+
+        // Create left player (local)
+        this.game.players = [
+          new Player(100, window.innerHeight / 2, "red", "left"),
+        ];
         this.game.localPlayerIndex = 0;
+        break;
+
+      case "projectile_created":
+        if (data.playerId !== this.playerId) {
+          const projectile = new Projectile(
+            data.projectile.x,
+            data.projectile.y,
+            data.projectile.direction,
+            data.projectile.color
+          );
+          this.game.projectiles.push(projectile);
+        }
         break;
 
       case "room_joined":
@@ -93,23 +105,24 @@ class GameClient {
         this.playerId = data.playerId;
         this.position = data.position;
         this.roomInfo.textContent = `Joined room: ${this.roomId}`;
-        // Create only right player, left player exists
-        this.game.players = [];
-        this.game.players.push(
+
+        // Create right player (local) and left player (remote)
+        this.game.players = [
+          new Player(100, window.innerHeight / 2, "red", "left"),
           new Player(
             window.innerWidth - 100,
             window.innerHeight / 2,
             "blue",
             "right"
-          )
-        );
-        this.game.localPlayerIndex = 0;
+          ),
+        ];
+        this.game.localPlayerIndex = 1; // Second player controls the right (blue) player
         break;
 
       case "game_start":
         this.roomInfo.textContent += " - Game Started!";
         if (this.position === "left") {
-          // Left player adds right player
+          // Add right player for the host
           this.game.players.push(
             new Player(
               window.innerWidth - 100,
@@ -117,11 +130,6 @@ class GameClient {
               "blue",
               "right"
             )
-          );
-        } else {
-          // Right player adds left player
-          this.game.players.unshift(
-            new Player(100, window.innerHeight / 2, "red", "left")
           );
         }
         break;
@@ -134,11 +142,11 @@ class GameClient {
 
       case "player_disconnected":
         this.roomInfo.textContent = "Other player disconnected";
-        // Remove opponent's player object
         if (this.position === "left") {
-          this.game.players.pop();
+          this.game.players.splice(1, 1);
         } else {
-          this.game.players.shift();
+          this.game.players.splice(0, 1);
+          this.game.localPlayerIndex = 0;
         }
         break;
 
@@ -164,7 +172,6 @@ class GameClient {
     const opponentIndex = this.position === "left" ? 1 : 0;
     const opponent = this.game.players[opponentIndex];
     if (opponent) {
-      // Only update position, keep direction fixed based on side
       opponent.x = data.gameState.x;
       opponent.y = data.gameState.y;
     }
@@ -178,8 +185,7 @@ class GameClient {
 
   sendGameState() {
     if (this.connected && this.roomId) {
-      const playerIndex = this.position === "left" ? 0 : 0;
-      const player = this.game.players[playerIndex];
+      const player = this.game.players[this.game.localPlayerIndex];
       if (player) {
         this.send({
           type: "game_update",
@@ -191,6 +197,21 @@ class GameClient {
           },
         });
       }
+    }
+  }
+
+  sendProjectile(projectile) {
+    if (this.connected && this.roomId) {
+      this.send({
+        type: "projectile_created",
+        roomId: this.roomId,
+        projectile: {
+          x: projectile.x,
+          y: projectile.y,
+          direction: projectile.direction,
+          color: projectile.color,
+        },
+      });
     }
   }
 }

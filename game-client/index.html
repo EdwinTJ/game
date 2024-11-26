@@ -37,8 +37,10 @@
     <script src="game.js"></script>
     <script src="gameSocket.js"></script>
     <script>
-      const game = new Game("gameCanvas");
-      const gameClient = new GameClient(game);
+      const gameClient = new GameClient();
+      const game = new Game("gameCanvas", gameClient);
+      gameClient.game = game;
+
       const originalUpdate = game.update;
       game.update = function (deltaTime) {
         originalUpdate.call(this, deltaTime);
