@@ -3,51 +3,65 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>2D Shooter Game</title>
+    <title>Undefined Game</title>
     <style>
       body {
         margin: 0;
+        background-color: antiquewhite;
         overflow: hidden;
-        background: #000;
+        background-position: 0 0, 40px 60px, 130px 270px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
       }
       canvas {
         display: block;
+        /* Add a futuristic border around the canvas */
+        border: 2px solid #4a9eff;
+        border-radius: 5px;
+        box-shadow: 0 0 15px #4a9eff, inset 0 0 15px #4a9eff;
       }
       button {
         padding: 8px 16px;
         margin: 5px;
         cursor: pointer;
-        background: #4caf50;
+        background: #4a9eff;
         border: none;
         color: white;
         border-radius: 4px;
+        text-transform: uppercase;
+        font-weight: bold;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 10px rgba(74, 158, 255, 0.5);
       }
       button:hover {
-        background: #45a049;
+        background: #2486ff;
+        box-shadow: 0 0 20px rgba(74, 158, 255, 0.8);
       }
       input {
         padding: 8px;
-        border: 1px solid #ddd;
+        border: 1px solid #4a9eff;
         border-radius: 4px;
+        background: rgba(15, 5, 36, 0.8);
+        color: #fff;
+      }
+      input::placeholder {
+        color: rgba(255, 255, 255, 0.5);
       }
     </style>
   </head>
   <body>
     <canvas id="gameCanvas"></canvas>
     <script type="module">
-      import { Game } from "./game.js";
-      import { GameClient } from "./gameSocket.js";
+      import { Game } from "./src/game.js";
+      import { GameClient } from "./src/GameClient.js";
 
-      // Create game first
       const game = new Game("gameCanvas", null);
-
-      // Create client with game reference
       const gameClient = new GameClient(game);
-
-      // Set client reference in game
       game.gameClient = gameClient;
 
-      // Set up update function
       const originalUpdate = game.update;
       game.update = function (deltaTime) {
         originalUpdate.call(this, deltaTime);
