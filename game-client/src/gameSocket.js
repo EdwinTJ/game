@@ -1,6 +1,5 @@
-import { Player, Projectile } from "./game.js";
-export { GameClient };
-
+import { Player } from "./classes/Player.js";
+import { Projectile } from "./classes/Projectile.js";
 class GameClient {
   constructor(game) {
     this.socket = null;
@@ -12,19 +11,19 @@ class GameClient {
     this.serverUrl = this.getServerUrl();
     this.init();
   }
+
   getServerUrl() {
     const isDevelopment = import.meta.env.DEV;
     const hostname = window.location.hostname;
 
     if (isDevelopment) {
-      // In development, connect to the WebSocket through Vite's proxy
-      return `ws://${hostname}:8080`; // Connect directly to WebSocket server
+      return `ws://${hostname}:8080`;
     } else {
-      // In production, connect directly to the server
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       return `${protocol}//${hostname}:8080`;
     }
   }
+
   init() {
     this.createUI();
     this.connect();
@@ -97,9 +96,9 @@ class GameClient {
         this.position = data.position;
         this.roomInfo.textContent = `Room created! ID: ${this.roomId}`;
 
-        // Create left player (local)
+        // Create left player (local) at fixed game coordinates
         this.game.players = [
-          new Player(100, window.innerHeight / 2, "red", "left"),
+          new Player(100, this.game.GAME_HEIGHT / 2, "red", "left"),
         ];
         this.game.localPlayerIndex = 0;
         break;
@@ -145,12 +144,12 @@ class GameClient {
         this.position = data.position;
         this.roomInfo.textContent = `Joined room: ${this.roomId}`;
 
-        // Create right player (local) and left player (remote)
+        // Create both players using fixed game dimensions
         this.game.players = [
-          new Player(100, window.innerHeight / 2, "red", "left"),
+          new Player(100, this.game.GAME_HEIGHT / 2, "red", "left"),
           new Player(
-            window.innerWidth - 100,
-            window.innerHeight / 2,
+            this.game.GAME_WIDTH - 100,
+            this.game.GAME_HEIGHT / 2,
             "blue",
             "right"
           ),
@@ -161,11 +160,11 @@ class GameClient {
       case "game_start":
         this.roomInfo.textContent += " - Game Started!";
         if (this.position === "left") {
-          // Add right player for the host
+          // Add right player for the host using fixed dimensions
           this.game.players.push(
             new Player(
-              window.innerWidth - 100,
-              window.innerHeight / 2,
+              this.game.GAME_WIDTH - 100,
+              this.game.GAME_HEIGHT / 2,
               "blue",
               "right"
             )
@@ -273,3 +272,4 @@ class GameClient {
     }
   }
 }
+export { GameClient };
