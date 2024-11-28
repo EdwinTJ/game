@@ -56,7 +56,7 @@
     <canvas id="gameCanvas"></canvas>
     <script type="module">
       import { Game } from "./src/game.js";
-      import { GameClient } from "./src/gameSocket.js";
+      import { GameClient } from "./src/GameClient.js";
 
       const game = new Game("gameCanvas", null);
       const gameClient = new GameClient(game);

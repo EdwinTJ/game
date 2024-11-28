@@ -182,6 +182,19 @@ wss.on("connection", (ws) => {
         }
         break;
 
+      case "wall_placed":
+        const wallRoom = rooms.get(data.roomId);
+        if (wallRoom) {
+          // Make sure to broadcast to ALL players including the sender
+          wallRoom.broadcastTo({
+            type: "wall_placed",
+            gridSide: data.gridSide,
+            position: data.position,
+            dimensions: data.dimensions,
+          });
+        }
+        break;
+
       case "health_update":
         const healthRoom = rooms.get(data.roomId);
         if (healthRoom) {

@@ -1,5 +1,6 @@
 import { Player } from "./classes/Player.js";
 import { Projectile } from "./classes/Projectile.js";
+import { Wall } from "./classes/Wall.js";
 class GameClient {
   constructor(game) {
     this.socket = null;
@@ -103,6 +104,21 @@ class GameClient {
         this.game.localPlayerIndex = 0;
         break;
 
+      case "game_start":
+        this.roomInfo.textContent += " - Game Started!";
+        if (this.position === "left") {
+          this.game.players.push(
+            new Player(
+              this.game.GAME_WIDTH - 100,
+              this.game.GAME_HEIGHT / 2,
+              "blue",
+              "right"
+            )
+          );
+          this.game.startWallTimer();
+        }
+        break;
+
       case "health_update":
         if (data.playerId !== this.playerId) {
           const opponentIndex = this.position === "left" ? 1 : 0;
@@ -157,10 +173,24 @@ class GameClient {
         this.game.localPlayerIndex = 1; // Second player controls the right (blue) player
         break;
 
+      case "wall_placed":
+        console.log("Received wall placement:", data);
+        const grid =
+          data.gridSide === "left" ? this.game.leftGrid : this.game.rightGrid;
+        const wall = new Wall(
+          0,
+          0,
+          data.dimensions.width,
+          data.dimensions.height
+        );
+
+        // Ensure the wall is placed in the exact same position on both clients
+        grid.placeItem(wall, data.position.row, data.position.col);
+        break;
+
       case "game_start":
         this.roomInfo.textContent += " - Game Started!";
         if (this.position === "left") {
-          // Add right player for the host using fixed dimensions
           this.game.players.push(
             new Player(
               this.game.GAME_WIDTH - 100,
@@ -169,6 +199,8 @@ class GameClient {
               "right"
             )
           );
+          // Only left player (host) starts the wall timer
+          this.game.startWallTimer();
         }
         break;
 
@@ -271,5 +303,17 @@ class GameClient {
       });
     }
   }
+  sendWallPlacement(gridSide, position, dimensions) {
+    if (this.connected && this.roomId) {
+      this.send({
+        type: "wall_placed",
+        roomId: this.roomId,
+        gridSide: gridSide,
+        position: position,
+        dimensions: dimensions,
+      });
+    }
+  }
 }
+
 export { GameClient };

@@ -1,6 +1,5 @@
 // src/classes/Player.js
-export { Player };
-
+import { Projectile } from "./Projectile";
 class Player {
   constructor(x, y, color, side) {
     this.x = x;
@@ -157,3 +156,5 @@ class Player {
     ctx.fillRect(xPos, yPos, barWidth * (this.health / 100), barHeight);
   }
 }
+
+export { Player };
