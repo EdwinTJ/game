@@ -12,20 +12,25 @@ class Projectile {
   }
 
   update(deltaTime, leftGrid, rightGrid) {
-    const nextX = this.x + Math.cos(this.direction) * this.speed * deltaTime;
-    const nextY = this.y + Math.sin(this.direction) * this.speed * deltaTime;
+    const oldX = this.x;
+    const oldY = this.y;
 
-    // Check collision with both grids
-    const leftCollision = leftGrid.checkCollision(nextX, nextY, this.size);
-    const rightCollision = rightGrid.checkCollision(nextX, nextY, this.size);
+    // Calculate new position
+    const newX = this.x + Math.cos(this.direction) * this.speed * deltaTime;
+    const newY = this.y + Math.sin(this.direction) * this.speed * deltaTime;
 
-    if (leftCollision.collides || rightCollision.collides) {
+    // Check wall collisions in both grids
+    const leftCollision = leftGrid.checkLineCollision(oldX, oldY, newX, newY);
+    const rightCollision = rightGrid.checkLineCollision(oldX, oldY, newX, newY);
+
+    if (leftCollision || rightCollision) {
       this.remove = true;
       return;
     }
 
-    this.x = nextX;
-    this.y = nextY;
+    // Update position if no collision
+    this.x = newX;
+    this.y = newY;
   }
 
   draw(ctx) {

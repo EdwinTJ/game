@@ -18,7 +18,11 @@ class Player {
   handleInput(keys, deltaTime) {
     if (this.isDead) return;
 
-    // Movement
+    // Store current position
+    const newX = this.x;
+    const newY = this.y;
+
+    // Calculate potential new position
     if (keys["w"] || keys["ArrowUp"]) this.y -= this.speed * deltaTime;
     if (keys["s"] || keys["ArrowDown"]) this.y += this.speed * deltaTime;
     if (keys["a"] || keys["ArrowLeft"]) this.x -= this.speed * deltaTime;
@@ -28,7 +32,7 @@ class Player {
     this.direction = this.side === "left" ? 0 : Math.PI;
   }
 
-  update(deltaTime, canvasWidth) {
+  update(deltaTime, canvasWidth, canvasHeight, leftGrid, rightGrid) {
     if (this.isDead) {
       this.respawnTimer -= deltaTime;
       if (this.respawnTimer <= 0) {
@@ -39,6 +43,20 @@ class Player {
 
     const centerLine = canvasWidth / 2;
     const playerRadius = this.size / 2;
+
+    // Store current position
+    const oldX = this.x;
+    const oldY = this.y;
+
+    // Check wall collisions with the appropriate grid
+    const grid = this.side === "left" ? leftGrid : rightGrid;
+    const collision = grid.checkCollision(this.x, this.y, playerRadius);
+
+    if (collision.collides) {
+      // Revert to previous position if collision detected
+      this.x = oldX;
+      this.y = oldY;
+    }
 
     // Center line boundary based on player's side
     if (this.side === "left") {
@@ -58,7 +76,7 @@ class Player {
     );
     this.y = Math.max(
       playerRadius,
-      Math.min(window.innerHeight - playerRadius, this.y)
+      Math.min(canvasHeight - playerRadius, this.y)
     );
 
     // Update shooting cooldown
@@ -66,7 +84,6 @@ class Player {
       this.shootCooldown -= deltaTime;
     }
   }
-
   shoot(projectiles, gameClient = null) {
     if (this.isDead) return;
 
